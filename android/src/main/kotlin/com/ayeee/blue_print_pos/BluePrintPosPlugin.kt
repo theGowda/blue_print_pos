@@ -11,7 +11,7 @@ import android.webkit.WebViewClient
 import androidx.annotation.NonNull
 import com.ayeee.blue_print_pos.extension.toBitmap
 import com.ayeee.blue_print_pos.extension.toByteArray
-import com.ayeee.blue_print_pos.kk
+import com.ayeee.blue_print_pos.AndroidPlatformViewFactory
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -20,17 +20,6 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-public class AndroidPlatformViewFactory extends PlatformViewFactory {
-    public AndroidPlatformViewFactory() {
-        super(StandardMessageCodec.INSTANCE);
-    }
-
-    @NonNull
-    @Override
-    public PlatformView create(Context context, int viewId, @Nullable Object args) {
-        return new FLNativeView(context);
-    }
-}
 
 
 /** BluePrintPosPlugin */
