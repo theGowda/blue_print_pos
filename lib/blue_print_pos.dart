@@ -196,15 +196,28 @@ class BluePrintPos {
         final List<flutter_blue.BluetoothService> bluetoothServices =
             await _bluetoothDeviceIOS?.discoverServices() ??
                 <flutter_blue.BluetoothService>[];
-        final flutter_blue.BluetoothService bluetoothService =
-            bluetoothServices.firstWhere(
-          (flutter_blue.BluetoothService service) => service.isPrimary,
-        );
-        final flutter_blue.BluetoothCharacteristic characteristic =
-            bluetoothService.characteristics.firstWhere(
-          (flutter_blue.BluetoothCharacteristic bluetoothCharacteristic) =>
-              bluetoothCharacteristic.properties.write,
-        );
+        final flutter_blue.BluetoothCharacteristic characteristic;
+        /*
+          The previous logic threw error if the selected service didn't have
+          characteristic with write property. This change selects service that
+          has atleast one characteristic with write property else throws an 
+          error
+        */
+        try {
+          characteristic = bluetoothServices
+              .firstWhere(
+                (flutter_blue.BluetoothService service) =>
+                    service.isPrimary &&
+                    service.characteristics.any(
+                        (flutter_blue.BluetoothCharacteristic element) =>
+                            element.properties.write),
+              )
+              .characteristics
+              .firstWhere((flutter_blue.BluetoothCharacteristic element) =>
+                  element.properties.write);
+        } catch (e) {
+          throw 'No write characteristic found';
+        }
         await characteristic.write(byteBuffer, withoutResponse: true);
       }
     } on Exception catch (error) {
