@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:blue_print_pos/blue_print_pos.dart';
 import 'package:blue_print_pos/models/models.dart';
 import 'package:blue_print_pos/receipt/receipt.dart';
+import 'package:esc_pos_utils_plus/esc_pos_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
 
 void main() {
   runApp(MyApp());
@@ -29,6 +32,13 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Blue Print Pos'),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  _bluePrintPos.getConnectedDevices();
+                },
+                icon: Icon(Icons.search))
+          ],
         ),
         body: SafeArea(
           child: _isLoading && _blueDevices.isEmpty
@@ -106,7 +116,7 @@ class _MyAppState extends State<MyApp> {
                                       _blueDevices[index].address ==
                                           (_selectedDevice?.address ?? ''))
                                     TextButton(
-                                      onPressed: _onPrintReceipt,
+                                      onPressed: testPrint,
                                       child: Container(
                                         color: _selectedDevice == null
                                             ? Colors.grey
@@ -167,7 +177,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _onScanPressed() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _selectedDevice = null;
+    });
     _bluePrintPos.scan().then((List<BlueDevice> devices) {
       if (devices.isNotEmpty) {
         setState(() {
@@ -210,17 +223,17 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _onPrintReceipt() async {
     /// Example for Print Image
-    final ByteData logoBytes = await rootBundle.load(
+    /* final ByteData logoBytes = await rootBundle.load(
       'assets/logo.jpg',
-    );
+    ); */
 
     /// Example for Print Text
     final ReceiptSectionText receiptText = ReceiptSectionText();
-    receiptText.addImage(
+    /* receiptText.addImage(
       base64.encode(Uint8List.view(logoBytes.buffer)),
       width: 150,
-    );
-    receiptText.addSpacer();
+    ); */
+    //receiptText.addSpacer();
     receiptText.addText(
       'MY STORE',
       size: ReceiptTextSizeType.medium,
@@ -239,7 +252,7 @@ class _MyAppState extends State<MyApp> {
       leftStyle: ReceiptTextStyleType.normal,
       rightStyle: ReceiptTextStyleType.bold,
     );
-    receiptText.addSpacer(useDashed: true);
+    /* receiptText.addSpacer(useDashed: true);
     receiptText.addLeftRightText(
       'TOTAL',
       'Rp30.000',
@@ -252,19 +265,48 @@ class _MyAppState extends State<MyApp> {
       'Cash',
       leftStyle: ReceiptTextStyleType.normal,
       rightStyle: ReceiptTextStyleType.normal,
+    ); */
+    receiptText.addText(
+      'Sachin Gowda',
+      size: ReceiptTextSizeType.large,
     );
-    receiptText.addSpacer(count: 2);
+    //receiptText.addSpacer(count: 2);
 
     await _bluePrintPos.printReceiptText(receiptText);
 
     /// Example for print QR
-    await _bluePrintPos.printQR('www.google.com', size: 250);
+    //await _bluePrintPos.printQR('www.google.com', size: 250);
 
     /// Text after QR
-    final ReceiptSectionText receiptSecondText = ReceiptSectionText();
-    receiptSecondText.addText('Powered by ayeee',
-        size: ReceiptTextSizeType.small);
-    receiptSecondText.addSpacer();
-    await _bluePrintPos.printReceiptText(receiptSecondText, feedCount: 1);
+  }
+
+  testPrint() async {
+    List<int> bytes = <int>[];
+    final CapabilityProfile profile = await CapabilityProfile.load();
+    final Generator generator = Generator(PaperSize.mm58, profile);
+    bytes += generator.text("1 MOMOS \$8.00",
+        linesAfter: 1, styles: PosStyles(align: PosAlign.left));
+    /* bytes += generator.row([
+      PosColumn(
+        text: '10000',
+        width: 2,
+        styles: PosStyles(
+          align: PosAlign.left,
+        ),
+      ),
+      PosColumn(
+        text: 'Chicken Biryani',
+        width: 5,
+        styles: PosStyles(align: PosAlign.center),
+      ),
+      PosColumn(
+        text: '1000000.00',
+        width: 5,
+        styles: PosStyles(align: PosAlign.right),
+      ),
+    ]); */
+    // bytes += generator.feed(1);
+    bytes += generator.cut();
+    await _bluePrintPos.printProcess(bytes);
   }
 }
