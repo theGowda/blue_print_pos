@@ -29,14 +29,10 @@ class BlueScanner {
         .toSet()
         .toList()
         .map(
-          (flutter_blue.BluetoothDevice bluetoothDevice) => BlueDevice(
-            address: bluetoothDevice.id.id,
-            name: bluetoothDevice.name,
-            type: bluetoothDevice.type.index,
-          ),
+          (flutter_blue.BluetoothDevice bluetoothDevice) =>
+              BlueDevice.fromBluetoothDevice(bluetoothDevice),
         )
         .toList();
-
     return devices;
   }
 }

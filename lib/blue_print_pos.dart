@@ -91,9 +91,34 @@ class BluePrintPos {
     return ConnectionStatus.disconnect;
   }
 
-  Future<void> getConnectedDevices() async {
-    final t = await _bluetoothPlus?.connectedDevices;
-    print(t);
+  Future<List<BlueDevice>> getConnectedDevices() async {
+    final List<flutter_blue.BluetoothDevice>? connDevices =
+        await _bluetoothPlus?.connectedDevices;
+    if (connDevices == null) {
+      return <BlueDevice>[];
+    }
+    return List<BlueDevice>.from(connDevices.map<BlueDevice>(
+        (flutter_blue.BluetoothDevice e) => BlueDevice.fromBluetoothDevice(e)));
+  }
+
+  void setSelectedDevice(BlueDevice device) {
+    /*
+      On Android (have to test on iOS) if the device was connected and app is restarted,
+      the device stays connected and doesn't show up on scan result.
+      The device does show up on getConnectedDevices call. 
+      The user can select the desired connected device and use this function
+      to set _bluetoothDevice 
+    */
+    selectedDevice = device;
+    selectedDevice!.connected = true;
+    _isConnected = true;
+    _bluetoothDevice = flutter_blue.BluetoothDevice.fromProto(
+      proto.BluetoothDevice(
+        name: selectedDevice?.name ?? '',
+        remoteId: selectedDevice?.address ?? '',
+        type: proto.BluetoothDevice_Type.valueOf(selectedDevice?.type ?? 0),
+      ),
+    );
   }
 
   /// This method only for print text

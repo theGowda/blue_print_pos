@@ -1,3 +1,5 @@
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+
 class BlueDevice {
   BlueDevice({
     required this.name,
@@ -5,6 +7,14 @@ class BlueDevice {
     this.connected = false,
     this.type = 0,
   });
+
+  factory BlueDevice.fromBluetoothDevice(BluetoothDevice bluetoothDevice) {
+    return BlueDevice(
+      address: bluetoothDevice.id.id,
+      name: bluetoothDevice.name,
+      type: bluetoothDevice.type.index,
+    );
+  }
 
   /// Name of bluetooth device, Android and iOS have same field name
   final String name;
