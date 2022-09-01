@@ -14,11 +14,12 @@ import 'package:image/image.dart' as img;
 import 'package:qr_flutter/qr_flutter.dart';
 
 class BluePrintPos {
+  static final BluePrintPos _instance = BluePrintPos._();
   BluePrintPos._() {
     _bluetoothPlus = flutter_blue.FlutterBluePlus.instance;
   }
 
-  static BluePrintPos get instance => BluePrintPos._();
+  static BluePrintPos get instance => _instance;
 
   static const MethodChannel _channel = MethodChannel('blue_print_pos');
 
@@ -59,17 +60,10 @@ class BluePrintPos {
           type: proto.BluetoothDevice_Type.valueOf(selectedDevice?.type ?? 0),
         ),
       );
-      final List<flutter_blue.BluetoothDevice> connectedDevices =
-          await _bluetoothPlus?.connectedDevices ??
-              <flutter_blue.BluetoothDevice>[];
-      final int deviceConnectedIndex = connectedDevices
-          .indexWhere((flutter_blue.BluetoothDevice bluetoothDevice) {
-        return bluetoothDevice.id == _bluetoothDevice?.id;
-      });
-      if (deviceConnectedIndex < 0) {
+      final bool isConn = await _isDeviceConnected(_bluetoothDevice);
+      if (!isConn) {
         await _bluetoothDevice?.connect();
       }
-
       _isConnected = true;
       selectedDevice?.connected = true;
       return Future<ConnectionStatus>.value(ConnectionStatus.connected);
@@ -99,6 +93,40 @@ class BluePrintPos {
     }
     return List<BlueDevice>.from(connDevices.map<BlueDevice>(
         (flutter_blue.BluetoothDevice e) => BlueDevice.fromBluetoothDevice(e)));
+  }
+
+  Future<bool?> isDeviceConnected(BlueDevice device) async {
+    try {
+      final flutter_blue.BluetoothDevice blDev =
+          flutter_blue.BluetoothDevice.fromProto(
+        proto.BluetoothDevice(
+          name: device?.name ?? '',
+          remoteId: device?.address ?? '',
+          type: proto.BluetoothDevice_Type.valueOf(device?.type ?? 0),
+        ),
+      );
+      return _isDeviceConnected(blDev);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> _isDeviceConnected(flutter_blue.BluetoothDevice? device) async {
+    if (device == null) {
+      return false;
+    }
+    final List<flutter_blue.BluetoothDevice> connectedDevices =
+        await _bluetoothPlus?.connectedDevices ??
+            <flutter_blue.BluetoothDevice>[];
+    final int deviceConnectedIndex = connectedDevices
+        .indexWhere((flutter_blue.BluetoothDevice bluetoothDevice) {
+      return bluetoothDevice.id == device?.id;
+    });
+    if (deviceConnectedIndex < 0) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   void setSelectedDevice(BlueDevice device) {
